@@ -58,22 +58,22 @@ fig = figure;
 % hold on;
 % landmarkPlot = plot(0, 0, 'b*', 'MarkerSize', 8);
 
-robotPlot = plot(0, 0, 'g-', 'LineWidth', 2);
+robotPlot = plot(0, 0, 'g-', 'LineWidth', 0.5);
 hold on;
 landmarkPlots = cell(1, 30);  % Assuming maximum of 30 landmarks
 lm_cmap = colormap(hsv(30));
 
 % Load and plot track_data
 load('track_data.mat');
-trackPlot = plot(x_path, y_path, 'k-', 'LineWidth', 2);
+trackPlot = plot(x_path + 1, y_path + 1, 'k-', 'LineWidth', 1, 'Color','b');
 
 % Initialize robot path plot
-robotPathPlot = plot(0, 0, 'g-', 'LineWidth', 1.5);
+robotPathPlot = scatter(1, 1, 3,"black" ,'filled');
 
 axis equal;
-xlim([min(x_path)-2, max(x_path)+2]);
-ylim([min(y_path)-2, max(y_path)+2]);
-grid on;
+xlim([0.5, 5]);
+ylim([0.5, 3.7]);
+grid off;
 title('Robot Path, Landmark Positions, and Track');
 xlabel('X (m)');
 ylabel('Y (m)');
@@ -84,6 +84,8 @@ ylabel('Y (m)');
 vis_data = struct('time', {}, 'robot_pos', {}, 'robot_cov', {}, 'landmark_pos', {}, 'landmark_cov', {}, 'landmark_nums', {});
 
 test_dataset = struct('image', {}, 'dt', {});
+
+landmark_ids_rendered = [];
 
 % INITIAL STATE
 u = 0;
@@ -154,7 +156,7 @@ while(true)
 
     for i = 1:size(landmarks_pos, 2)
         if isempty(landmarkPlots{i}) || ~isvalid(landmarkPlots{i})
-            landmarkPlots{i} = plot(NaN, NaN, 'Color', lm_cmap(i,:), 'LineWidth', 2);
+            landmarkPlots{i} = plot(NaN, NaN, 'Color', lm_cmap(i,:), 'LineWidth', 0.5);
         end
             
         % Extract landmark covariance
@@ -165,6 +167,16 @@ while(true)
         
         % Update ellipse plot
         set(landmarkPlots{i}, 'XData', ellipse_x, 'YData', ellipse_y);
+    end
+    
+    %draw landmark ids    
+    %delete old markers
+    for i = 1:length(landmark_ids_rendered)
+        delete(landmark_ids_rendered(i));
+    end
+    %draw new markers
+    for i = 1:length(landmarks_pos(1,:))
+        landmark_ids_rendered(i) = text(landmarks_pos(1,i), landmarks_pos(2,i), num2str(landmark_nums(i)), 'HorizontalAlignment', 'center', 'VerticalAlignment', 'middle', 'Color', 'black');
     end
 
     drawnow;
@@ -267,3 +279,6 @@ disp(rms_error);
 
 % plot the trajectory
 plot_trajectory(vis_data);
+
+%output txt
+generate_txt(idx2num, landmarks_pos);
